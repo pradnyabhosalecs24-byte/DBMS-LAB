@@ -1,0 +1,57 @@
+CREATE DATABASE supplierDB;
+USE supplierDB;
+CREATE TABLE SUPPLIERS (SID INT PRIMARY KEY,SNAME VARCHAR(255),CITY VARCHAR(255));
+CREATE TABLE PARTS (PID INT PRIMARY KEY,PNAME VARCHAR(255),COLOR VARCHAR(255));
+CREATE TABLE CATALOG (SID INT,PID INT,COST DECIMAL(10, 2),PRIMARY KEY (SID, PID),FOREIGN KEY (SID) REFERENCES SUPPLIERS(SID),
+FOREIGN KEY (PID) REFERENCES PARTS(PID));
+INSERT INTO SUPPLIERS VALUES (10001, 'Acme Widget', 'Bangalore');
+INSERT INTO SUPPLIERS VALUES (10002, 'Jahns', 'Kolkata');
+INSERT INTO SUPPLIERS VALUES (10003, 'Vimal', 'Mumbai');
+INSERT INTO SUPPLIERS VALUES (10004, 'Reliance', 'Delhi');
+INSERT INTO PARTS VALUES (20001, 'Book', 'Red');
+INSERT INTO PARTS VALUES (20002, 'Pen', 'Red');
+INSERT INTO PARTS VALUES (20003, 'Pencil', 'Green');
+INSERT INTO PARTS VALUES (20004, 'Mobile', 'Green');
+INSERT INTO PARTS VALUES (20005, 'Charger', 'Black');
+INSERT INTO CATALOG VALUES (10001, 20001, 10);
+INSERT INTO CATALOG VALUES (10001, 20002, 10);
+INSERT INTO CATALOG VALUES (10001, 20003, 30);
+INSERT INTO CATALOG VALUES (10001, 20004, 10);
+INSERT INTO CATALOG VALUES (10001, 20005, 10);
+INSERT INTO CATALOG VALUES (10002, 20001, 10);
+INSERT INTO CATALOG VALUES (10002, 20002, 20);
+INSERT INTO CATALOG VALUES (10003, 20005, 30);
+INSERT INTO CATALOG VALUES (10004, 20005, 40);
+SELECT DISTINCT P.PNAME
+FROM PARTS P
+JOIN CATALOG C ON P.PID = C.PID;
+select s.sname from suppliers s
+join catalog c on s.sid=c.sid
+group by s.sid,s.sname
+having count(distinct c.pid)=(select count(*) from parts);
+SELECT s.sname
+FROM Suppliers s
+JOIN Catalog c ON s.sid = c.sid
+JOIN Parts p ON c.pid = p.pid
+WHERE p.color = 'Red'
+GROUP BY s.sid, s.sname
+HAVING COUNT(DISTINCT p.pid) = (SELECT COUNT(*) FROM Parts WHERE color = 'Red');
+SELECT p.pname
+FROM Parts p
+JOIN Catalog c ON p.pid = c.pid
+JOIN Suppliers s ON c.sid = s.sid
+WHERE s.sname = 'Acme Widget'
+AND p.pid NOT IN (SELECT pid FROM Catalog c2 JOIN Suppliers s2 ON c2.sid = s2.sid
+    WHERE s2.sname <> 'Acme Widget');
+SELECT DISTINCT c.sid
+FROM Catalog c
+JOIN (
+    SELECT pid, AVG(cost) AS avg_cost
+    FROM Catalog
+    GROUP BY pid) A ON c.pid = A.pid WHERE c.cost > A.avg_cost;
+SELECT p.pid, s.sname
+FROM Parts p
+JOIN Catalog c ON p.pid = c.pid
+JOIN Suppliers s ON s.sid = c.sid
+WHERE c.cost = (SELECT MAX(cost)
+FROM Catalog c2 WHERE c2.pid = p.pid);
